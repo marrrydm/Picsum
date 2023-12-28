@@ -114,28 +114,6 @@ extension ImageViewModel {
         }
     }
 
-
-//    func addToFavorites(_ image: ImageModel) {
-//        guard !isFavorite(image: image) else {
-//            print("Already in favorites. Skipping addition.")
-//            return
-//        }
-//
-//        favoriteImages.append(image)
-//        saveFavorites()
-//
-//        if let imageUrl = URL(string: image.download_url) {
-//            ImageService.shared.loadImage(from: imageUrl) { [weak self] loadedImage in
-//                guard let loadedImage = loadedImage else {
-//                    return
-//                }
-//
-//                self?.cacheRandomImage(image, uiImage: loadedImage)
-//                print("Added to favorites and cached image.")
-//            }
-//        }
-//    }
-
     func removeFromFavorites(at index: Int) {
         guard index >= 0, index < favoriteImages.count else {
             return
