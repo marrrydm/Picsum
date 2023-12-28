@@ -80,7 +80,6 @@ extension FavoritesViewController: UICollectionViewDataSource {
             cell.configureForFavorites(with: image, cachedImage: cachedImage, viewModel: viewModel)
             cell.toggleFavorite = { [weak self] in
                 self?.viewModel.removeFromFavorites(at: indexPath.item)
-//                collectionView.deleteItems(at: [indexPath])
             }
         }
         return cell
