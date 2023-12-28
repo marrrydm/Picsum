@@ -23,6 +23,9 @@
 		F815A1092B3CDA3700E5F49B /* ImageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F815A1082B3CDA3700E5F49B /* ImageModel.swift */; };
 		F815A10C2B3CDD1000E5F49B /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F815A10B2B3CDD1000E5F49B /* Extension.swift */; };
 		F815A10F2B3CDD1B00E5F49B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F815A1112B3CDD1B00E5F49B /* Localizable.strings */; };
+		F862DEB92B3DAC4A0043DB86 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F862DEB82B3DAC4A0043DB86 /* Storage.swift */; };
+		F862DEBB2B3DAC830043DB86 /* FavoriteImageEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F862DEBA2B3DAC830043DB86 /* FavoriteImageEntity.swift */; };
+		F862DECC2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = F862DEC92B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +66,10 @@
 		F815A1082B3CDA3700E5F49B /* ImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageModel.swift; sourceTree = "<group>"; };
 		F815A10B2B3CDD1000E5F49B /* Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extension.swift; sourceTree = "<group>"; };
 		F815A1102B3CDD1B00E5F49B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F862DEB82B3DAC4A0043DB86 /* Storage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storage.swift; sourceTree = "<group>"; };
+		F862DEBA2B3DAC830043DB86 /* FavoriteImageEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteImageEntity.swift; sourceTree = "<group>"; };
+		F862DECA2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = FavoriteImageEntity.xcdatamodel; sourceTree = "<group>"; };
+		F862DECB2B3DBBAD0043DB86 /* ImageModelName.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ImageModelName.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +120,7 @@
 		F815A0B32B36DD1000E5F49B /* TestMagenta */ = {
 			isa = PBXGroup;
 			children = (
+				F862DEB72B3DAC380043DB86 /* Storage */,
 				F815A10A2B3CDD0800E5F49B /* Support */,
 				F815A0F62B3B2BA900E5F49B /* Models */,
 				F815A1002B3B2CB900E5F49B /* Network */,
@@ -194,6 +202,16 @@
 				F815A1112B3CDD1B00E5F49B /* Localizable.strings */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		F862DEB72B3DAC380043DB86 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				F862DEB82B3DAC4A0043DB86 /* Storage.swift */,
+				F862DEBA2B3DAC830043DB86 /* FavoriteImageEntity.swift */,
+				F862DEC92B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld */,
+			);
+			path = Storage;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -327,12 +345,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F862DEBB2B3DAC830043DB86 /* FavoriteImageEntity.swift in Sources */,
 				F815A1042B3B5BAD00E5F49B /* FavoritesVC.swift in Sources */,
+				F862DEB92B3DAC4A0043DB86 /* Storage.swift in Sources */,
 				F815A0FF2B3B2C4700E5F49B /* ImageCell.swift in Sources */,
 				F815A0B52B36DD1000E5F49B /* AppDelegate.swift in Sources */,
 				F815A0F12B38682B00E5F49B /* TabBarController.swift in Sources */,
 				F815A0B72B36DD1000E5F49B /* SceneDelegate.swift in Sources */,
 				F815A10C2B3CDD1000E5F49B /* Extension.swift in Sources */,
+				F862DECC2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld in Sources */,
 				F815A0F52B3B2B2C00E5F49B /* NetworkCore.swift in Sources */,
 				F815A0FA2B3B2BBF00E5F49B /* ImageViewModel.swift in Sources */,
 				F815A0FC2B3B2BDF00E5F49B /* RandomVC.swift in Sources */,
@@ -678,6 +699,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		F862DEC92B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				F862DECA2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodel */,
+				F862DECB2B3DBBAD0043DB86 /* ImageModelName.xcdatamodel */,
+			);
+			currentVersion = F862DECA2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodel */;
+			path = FavoriteImageEntity.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = F815A0A92B36DD1000E5F49B /* Project object */;
 }

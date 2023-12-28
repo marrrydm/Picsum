@@ -1,17 +1,23 @@
+import CoreData
 import UIKit
 
 protocol ImageViewModelDelegate: AnyObject {
     func didRemoveItem(at index: Int)
 }
 
+protocol ImageViewModelDelegateAdd: AnyObject {
+    func didToggleFavorite(at index: Int, with image: UIImage?)
+}
+
 class ImageViewModel {
     var randomImages: [ImageModel] = []
-    var favoriteImages: [ImageModel] = []
+    var favoriteImages: [FavoriteImageEntity] = []
     var currentTab: Tab = .random
     var isFavoritesTab: Bool = false
     var userDefaults: UserDefaults = UserDefaults.standard
-
+    
     weak var delegate: ImageViewModelDelegate?
+    weak var delegateAdd: ImageViewModelDelegateAdd?
     
     func loadImage(for image: ImageModel, completion: @escaping (UIImage?) -> Void) {
         guard let imageUrl = URL(string: image.download_url) else {
@@ -34,12 +40,30 @@ extension ImageViewModel {
         }
         return randomImages[index]
     }
-
+    
     func getFavoriteImage(at index: Int) -> ImageModel? {
         guard index >= 0, index < favoriteImages.count else {
             return nil
         }
-        return favoriteImages[index]
+        
+        let favoriteEntity = favoriteImages[index]
+        
+        let author = favoriteEntity.author ?? ""
+        let url = favoriteEntity.url ?? ""
+        let downloadUrl = favoriteEntity.download_url ?? ""
+        
+        let imageModel = ImageModel(
+            id: favoriteEntity.id ?? "",
+            author: author,
+            width: Int(favoriteEntity.width),
+            height: Int(favoriteEntity.height),
+            url: url,
+            download_url: downloadUrl,
+            isFavorite: favoriteEntity.isFavorite,
+            image: UIImage(data: favoriteEntity.image ?? Data())
+        )
+        
+        return imageModel
     }
 }
 
@@ -47,11 +71,11 @@ extension ImageViewModel {
     var numberOfRandomImages: Int {
         return randomImages.count
     }
-
+    
     var numberOfFavoriteImages: Int {
         return favoriteImages.count
     }
-
+    
     var numberOfImages: Int {
         switch currentTab {
         case .random:
@@ -69,62 +93,78 @@ extension ImageViewModel {
         }
         randomImages.remove(at: index)
     }
-
+    
     func toggleFavorite(at index: Int) {
         guard let image = getRandomImage(at: index) else {
             return
         }
-
+        
         if favoriteImages.contains(where: { $0.id == image.id }) {
             print("Removing from favorites at index: \(index)")
             removeFromFavorites(at: index)
         } else {
             print("Adding to favorites at index: \(index)")
-            addToFavorites(image, completion: {_ in 
+            
+            loadImage(for: image) { [weak self] loadedImage in
+                guard let self = self, let loadedImage = loadedImage else {
+                    return
+                }
                 
-            })
+                self.delegateAdd?.didToggleFavorite(at: index, with: loadedImage)
+                self.addToFavorites(image, completion: {_ in })
+            }
         }
     }
-
+    
+    
     func isFavorite(image: ImageModel) -> Bool {
         return favoriteImages.contains { $0.id == image.id }
     }
-
+    
     func addToFavorites(_ image: ImageModel, completion: @escaping (Result<Void, Error>) -> Void) {
         guard !isFavorite(image: image) else {
             completion(.success(())) // Image is already in favorites
             return
         }
-
-        favoriteImages.append(image)
-        saveFavorites()
-
-        if let imageUrl = URL(string: image.download_url) {
-            ImageService.shared.loadImage(from: imageUrl) { [weak self] loadedImage in
-                guard let self = self, let loadedImage = loadedImage else {
-                    completion(.failure(NSError(domain: "YourDomain", code: 0, userInfo: nil)))
-                    return
-                }
-
-                self.cacheRandomImage(image, uiImage: loadedImage)
-                completion(.success(()))
-            }
-        } else {
+        
+        guard let context = CoreDataStack.shared.context else {
+            print("Error: ManagedObjectContext is nil")
             completion(.failure(NSError(domain: "YourDomain", code: 0, userInfo: nil)))
-        }
-    }
-
-    func removeFromFavorites(at index: Int) {
-        guard index >= 0, index < favoriteImages.count else {
             return
         }
-
+        
+        ImageService.shared.loadImage(from: URL(string: image.download_url)!) { [weak self] loadedImage in
+            guard let self = self, let loadedImage = loadedImage else {
+                completion(.failure(NSError(domain: "YourDomain", code: 0, userInfo: nil)))
+                return
+            }
+            
+            do {
+                let favoriteEntity = try FavoriteImageEntity.create(in: context, image: image, uiImage: loadedImage)
+                
+                try context.save()
+                
+                self.favoriteImages.append(favoriteEntity)
+                completion(.success(()))
+            } catch {
+                print("Error creating or saving FavoriteImageEntity: \(error)")
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    func isFavoriteImageInRandom(at index: Int) -> Bool {
+        guard let randomImage = getRandomImage(at: index) else { return false }
+        return isFavorite(image: randomImage)
+    }
+    
+    func removeFromFavorites(at index: Int) {
+        guard index >= 0, index < favoriteImages.count else { return }
+        
         let removedImage = favoriteImages.remove(at: index)
-        saveFavorites()
-
-        let userDefaultsKey = "RandomImage_\(removedImage.id)"
-        UserDefaults.standard.removeObject(forKey: userDefaultsKey)
-
+        CoreDataStack.shared.context?.delete(removedImage)
+        CoreDataStack.shared.saveContext()
+        
         delegate?.didRemoveItem(at: index)
     }
 }
@@ -139,74 +179,101 @@ extension ImageViewModel {
                     completion()
                     return
                 }
-
+                
                 self?.randomImages.append(contentsOf: newImages)
                 completion()
             }
         }
     }
-
+    
     func loadFavoritesFromCache(completion: @escaping () -> Void) {
         guard currentTab == .favorites else {
             completion()
             return
         }
-
+        
         DispatchQueue.global().async { [weak self] in
-            var cachedImages: [ImageModel] = []
-
-            for favoriteImage in self?.favoriteImages ?? [] {
-                if let cachedImage = self?.getCachedRandomImage(at: favoriteImage) {
-                    var updatedFavoriteImage = favoriteImage
-                    updatedFavoriteImage.image = cachedImage
-                    cachedImages.append(updatedFavoriteImage)
+            guard let context = CoreDataStack.shared.context else {
+                print("Error: ManagedObjectContext is nil")
+                DispatchQueue.main.async {
+                    completion()
+                }
+                return
+            }
+            
+            let fetchRequest = NSFetchRequest<FavoriteImageEntity>(entityName: "FavoriteImageEntity")
+            
+            do {
+                let cachedImages = try context.fetch(fetchRequest)
+                let favoriteEntities = cachedImages.map { favoriteEntity in
+                    favoriteEntity
+                }
+                
+                DispatchQueue.main.async {
+                    // Обновляем массив favoriteImages
+                    self?.favoriteImages = favoriteEntities
+                    completion()
+                }
+            } catch {
+                print("Error fetching cached images from Core Data: \(error)")
+                DispatchQueue.main.async {
+                    completion()
                 }
             }
-
-            self?.favoriteImages = cachedImages
-
-            DispatchQueue.main.async {
-                completion()
-            }
         }
     }
-}
-
-extension ImageViewModel {
-    private func saveFavorites() {
-        let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(favoriteImages) {
-            UserDefaults.standard.set(encoded, forKey: "favorites")
-        }
-    }
-
-    func loadFavorites() {
-        if let favoritesData = UserDefaults.standard.data(forKey: "favorites") {
-            let decoder = JSONDecoder()
-            if let favorites = try? decoder.decode([ImageModel].self, from: favoritesData) {
-                favoriteImages = favorites
-            }
-        }
-    }
-
-    func cacheRandomImage(_ image: ImageModel, uiImage: UIImage) {
-        let imageId = image.id
+    
+    func cacheRandomImage(with imageId: String, uiImage: UIImage) {
         let userDefaultsKey = "RandomImage_\(imageId)"
-
+        
         if let imageData = uiImage.jpegData(compressionQuality: 1.0) {
             UserDefaults.standard.set(imageData, forKey: userDefaultsKey)
             UserDefaults.standard.set(imageId, forKey: "RandomImageId_\(imageId)")
         }
     }
-
-    func getCachedRandomImage(at image: ImageModel) -> UIImage? {
-        let userDefaultsKey = "RandomImage_\(image.id)"
-
-        if let savedImageData = UserDefaults.standard.data(forKey: userDefaultsKey),
-           let savedImage = UIImage(data: savedImageData) {
-            return savedImage
+    
+    func loadFavorites(completion: @escaping () -> Void) {
+        guard let context = CoreDataStack.shared.context else {
+            print("Error: ManagedObjectContext is nil")
+            completion()
+            return
         }
+        
+        let fetchRequest = NSFetchRequest<FavoriteImageEntity>(entityName: "FavoriteImageEntity")
+        
+        do {
+            let favoriteImages = try context.fetch(fetchRequest)
+            self.favoriteImages = favoriteImages
+            completion()
+        } catch {
+            print("Error fetching favorite images from Core Data: \(error)")
+            completion()
+        }
+    }
+}
 
+extension ImageViewModel {
+    func getCachedRandomImage(at image: ImageModel) -> UIImage? {
+        guard let context = CoreDataStack.shared.context else {
+            print("Error: ManagedObjectContext is nil")
+            return nil
+        }
+        
+        let fetchRequest: NSFetchRequest<FavoriteImageEntity> = FavoriteImageEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", image.id)
+        
+        do {
+            let result = try context.fetch(fetchRequest)
+            if let favoriteEntity = result.first {
+                if let imageData = favoriteEntity.image {
+                    return UIImage(data: imageData)
+                }
+            }
+        } catch {
+            print("Error fetching cached image from Core Data: \(error)")
+        }
+        
         return nil
     }
 }
+

@@ -19,7 +19,9 @@ class RandomViewController: UIViewController {
         viewModel.currentTab = .random
         setupCollectionView()
         fetchRandomImages()
-        viewModel.loadFavorites()
+        viewModel.loadFavorites { [weak self] in
+            self?.collectionView.reloadData()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -66,13 +68,15 @@ extension RandomViewController: UICollectionViewDataSource {
         }
 
         if let image = viewModel.getRandomImage(at: indexPath.item) {
-            cell.configureForRandom(with: image, isFavoriteTab: false, viewModel: viewModel)
+            let isFavoriteInRandom = viewModel.isFavoriteImageInRandom(at: indexPath.item)
+            cell.configureForRandom(with: image, isFavoriteTab: isFavoriteInRandom, viewModel: viewModel)
 
             cell.toggleFavorite = { [weak self] in
                 self?.viewModel.toggleFavorite(at: indexPath.item)
                 cell.updateFavoriteButton(isFavorite: self?.viewModel.isFavorite(image: image) ?? .random())
-                self?.viewModel.loadFavorites()
-                self?.collectionView.reloadItems(at: [indexPath])
+                self?.viewModel.loadFavorites { [weak self] in
+                    self?.collectionView.reloadItems(at: [indexPath])
+                }
             }
         }
 
@@ -88,5 +92,12 @@ extension RandomViewController: UICollectionViewDataSource {
 extension RandomViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: (collectionView.frame.width - 16) / 2, height: 200)
+    }
+}
+
+extension RandomViewController: ImageViewModelDelegateAdd {
+    func didToggleFavorite(at index: Int, with image: UIImage?) {
+        let indexPath = IndexPath(item: index, section: 0)
+        collectionView.reloadItems(at: [indexPath])
     }
 }

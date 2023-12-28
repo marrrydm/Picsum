@@ -20,12 +20,16 @@ class FavoritesViewController: UIViewController {
         viewModel.currentTab = .favorites
         setupCollectionView()
         fetchFavoriteImages()
-        viewModel.loadFavorites()
+        viewModel.loadFavorites { [weak self] in
+            self?.collectionView.reloadData()
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        viewModel.loadFavorites()
+        viewModel.loadFavorites { [weak self] in
+            self?.collectionView.reloadData()
+        }
         fetchFavoriteImages()
     }
 }

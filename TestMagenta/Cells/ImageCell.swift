@@ -58,12 +58,24 @@ private extension ImageCell {
 private extension ImageCell {
     @objc func favoriteButtonTapped() {
         toggleFavorite?()
-        if let image = imageView.image,
-           let imageModel = imageViewModel?.getRandomImage(at: self.tag) {
-            imageViewModel?.cacheRandomImage(imageModel, uiImage: image)
+        if let image = imageView.image, let imageModel = imageViewModel?.getRandomImage(at: self.tag) {
+            // Используем imageModel для получения id и обновления кэша
+            let imageId = imageModel.id
+            imageViewModel?.cacheRandomImage(with: imageId, uiImage: image)
+
         }
     }
 }
+
+//private extension ImageCell {
+//    @objc func favoriteButtonTapped() {
+//        toggleFavorite?()
+//        if let image = imageView.image,
+//           let imageModel = imageViewModel?.getRandomImage(at: self.tag) {
+//            imageViewModel?.cacheRandomImage(imageModel, uiImage: image)
+//        }
+//    }
+//}
 
 extension ImageCell {
     func configureForRandom(with image: ImageModel, isFavoriteTab: Bool, viewModel: ImageViewModel) {
@@ -73,8 +85,8 @@ extension ImageCell {
             guard let self = self, let loadedImage = loadedImage else { return }
             self.imageView.image = loadedImage
 
-            let imageName = image.isFavorite ? "heart.fill" : "heart"
-            let image = UIImage(systemName: imageName)
+            let imageName = image.isFavorite ? UIImage(systemName: "heart.fill") : UIImage(systemName: "heart")
+            let image = imageName
             self.likeButton.setImage(image, for: .normal)
         }
     }
