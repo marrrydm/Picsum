@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "random.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
