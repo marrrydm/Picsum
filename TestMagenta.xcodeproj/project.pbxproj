@@ -26,6 +26,7 @@
 		F862DEB92B3DAC4A0043DB86 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F862DEB82B3DAC4A0043DB86 /* Storage.swift */; };
 		F862DEBB2B3DAC830043DB86 /* FavoriteImageEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F862DEBA2B3DAC830043DB86 /* FavoriteImageEntity.swift */; };
 		F862DECC2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = F862DEC92B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld */; };
+		F862DECE2B3DCD780043DB86 /* Protolocs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F862DECD2B3DCD780043DB86 /* Protolocs.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 		F862DEBA2B3DAC830043DB86 /* FavoriteImageEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteImageEntity.swift; sourceTree = "<group>"; };
 		F862DECA2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = FavoriteImageEntity.xcdatamodel; sourceTree = "<group>"; };
 		F862DECB2B3DBBAD0043DB86 /* ImageModelName.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ImageModelName.xcdatamodel; sourceTree = "<group>"; };
+		F862DECD2B3DCD780043DB86 /* Protolocs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protolocs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -200,6 +202,7 @@
 			children = (
 				F815A10B2B3CDD1000E5F49B /* Extension.swift */,
 				F815A1112B3CDD1B00E5F49B /* Localizable.strings */,
+				F862DECD2B3DCD780043DB86 /* Protolocs.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -356,6 +359,7 @@
 				F862DECC2B3DBBAD0043DB86 /* FavoriteImageEntity.xcdatamodeld in Sources */,
 				F815A0F52B3B2B2C00E5F49B /* NetworkCore.swift in Sources */,
 				F815A0FA2B3B2BBF00E5F49B /* ImageViewModel.swift in Sources */,
+				F862DECE2B3DCD780043DB86 /* Protolocs.swift in Sources */,
 				F815A0FC2B3B2BDF00E5F49B /* RandomVC.swift in Sources */,
 				F815A1092B3CDA3700E5F49B /* ImageModel.swift in Sources */,
 			);

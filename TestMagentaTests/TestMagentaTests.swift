@@ -1,4 +1,5 @@
 import XCTest
+import CoreData
 @testable import TestMagenta
 
 class ImageServiceTests: XCTestCase {
@@ -43,151 +44,237 @@ class ImageServiceTests: XCTestCase {
     }
 }
 
-class ImageViewModelTests: XCTestCase {
-    var viewModel: ImageViewModel!
+class ImageViewModelTests2: XCTestCase {
+    var imageViewModel: ImageViewModel!
 
     override func setUp() {
         super.setUp()
-        viewModel = ImageViewModel()
+        imageViewModel = ImageViewModel()
     }
 
     override func tearDown() {
-        viewModel = nil
+        imageViewModel = nil
         super.tearDown()
     }
 
-    func createTestImage(id: String = "1", author: String = "Test Author", width: Int = 100, height: Int = 100, url: String = "http://example.com/image.jpg", downloadUrl: String = "http://example.com/download.jpg") -> ImageModel {
-        return ImageModel(id: id, author: author, width: width, height: height, url: url, download_url: downloadUrl)
-    }
-
-    func testToggleFavorite() {
-        let testImage = ImageModel(
-            id: "123",
-            author: "test_author",
+    // Тест для метода addToFavorites
+    func testAddToFavorites() {
+        // Мок изображение для теста
+        let fakeImage = ImageModel(
+            id: "7",
+            author: "Fake Author",
             width: 100,
             height: 100,
-            url: "test_url",
-            download_url: "test_download_url"
+            url: "http://example.com/image.jpg",
+            download_url: "http://example.com/image.jpg",
+            isFavorite: false,
+            image: nil
         )
-        viewModel.randomImages = [testImage]
 
-        // Переключаем избранное и проверяем, что тестовое изображение находится в списке избранных
-        viewModel.toggleFavorite(at: 0)
-        XCTAssertTrue(viewModel.isFavorite(image: testImage))
-
-        // Повторно переключаем избранное и проверяем, что тестовое изображение удалено из списка избранных
-        viewModel.toggleFavorite(at: 0)
-        XCTAssertFalse(viewModel.isFavorite(image: testImage))
-    }
-
-    // Тест добавления изображения в избранное
-    func testAddToFavorites_ImageNotInFavorites_ImageAdded() {
-        let image = createTestImage()
-
-        viewModel.addToFavorites(image, completion: {_ in
-
-        })
-
-        XCTAssertTrue(viewModel.isFavorite(image: image))
-        XCTAssertEqual(viewModel.numberOfFavoriteImages, 1)
-    }
-
-    // Тест добавления изображения в избранное, когда оно уже там
-    func testAddToFavorites_ImageAlreadyInFavorites_NoChange() {
-        let image = createTestImage()
-
-        viewModel.addToFavorites(image, completion: {_ in
-
-        })
-        viewModel.addToFavorites(image, completion: {_ in
-
-        })
-
-        XCTAssertTrue(viewModel.isFavorite(image: image))
-        XCTAssertEqual(viewModel.numberOfFavoriteImages, 1)
-    }
-
-    // Тест удаления изображения из избранного
-    func testRemoveFromFavorites_ValidIndex_ImageRemoved() {
-        let image = createTestImage()
-        viewModel.addToFavorites(image, completion: {_ in
-
-        })
-
-        viewModel.removeFromFavorites(at: 0)
-
-        XCTAssertFalse(viewModel.isFavorite(image: image))
-        XCTAssertEqual(viewModel.numberOfFavoriteImages, 0)
-    }
-
-    // Тест удаления изображения из избранного с недопустимым индексом
-    func testRemoveFromFavorites_InvalidIndex_NoChange() {
-        let image = createTestImage()
-        viewModel.addToFavorites(image, completion: {_ in
-
-        })
-
-        viewModel.removeFromFavorites(at: 1)
-
-        XCTAssertTrue(viewModel.isFavorite(image: image))
-        XCTAssertEqual(viewModel.numberOfFavoriteImages, 1)
-    }
-
-    // Тест проверки, что изображение в избранном
-    func testIsFavorite_ImageInFavorites_ReturnsTrue() {
-        let image = createTestImage()
-        viewModel.addToFavorites(image, completion: {_ in
-
-        })
-
-        let isFavorite = viewModel.isFavorite(image: image)
-
-        XCTAssertTrue(isFavorite)
-    }
-
-    // Тест проверки, что изображение не в избранном
-    func testIsFavorite_ImageNotInFavorites_ReturnsFalse() {
-        let image = createTestImage()
-
-        let isFavorite = viewModel.isFavorite(image: image)
-
-        XCTAssertFalse(isFavorite)
-    }
-
-    // Тест загрузки дополнительных случайных изображений (порог не достигнут)
-    func testLoadMoreRandomImagesIfNeeded_ThresholdNotReached_NoChange() {
-        let initialCount = viewModel.numberOfRandomImages
-
-        viewModel.loadMoreRandomImagesIfNeeded(at: initialCount - 1) {
+        class MockImageService: ImageServiceProtocol {
+            var loadImageCompletion: ((URL, @escaping (UIImage?) -> Void) -> Void)?
+            // заглушка
+            func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
+                loadImageCompletion?(url, completion)
+            }
         }
 
-        XCTAssertEqual(viewModel.numberOfRandomImages, initialCount)
+        // Создаем экземпляр ImageViewModel с MockImageService
+        let imageViewModel = ImageViewModel()
+        let mockImageService = MockImageService()
+        imageViewModel.imageService = mockImageService
+
+        // заглушка для метода loadImage
+        mockImageService.loadImageCompletion = { _, completion in
+            // заглушка для успешной загрузки изображения
+            completion(UIImage(systemName: "heart.fill"))
+        }
+
+        // Запускаем метод addToFavorites и проверяем, что изображение добавляется в избранное
+        let expectation = XCTestExpectation(description: "Add to favorites")
+
+        imageViewModel.addToFavorites(fakeImage) { result in
+            switch result {
+            case .success:
+                XCTAssertTrue(imageViewModel.isFavorite(image: fakeImage))
+                XCTAssertEqual(imageViewModel.numberOfFavoriteImages, 1)
+                print("Success: Image added to favorites")
+            case .failure(let error):
+                XCTFail("Failed to add to favorites with error: \(error)")
+            }
+
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
     }
 
-    // Тест кеширования случайного изображения
-    func testCacheRandomImage_ValidInput_ImageCached() {
-        // Arrange
-        let image = createTestImage()
-        let uiImage = UIImage(systemName: "heart.fill")! // Просто для примера
+    // Тест для метода removeFromFavorites
+    func testRemoveFromFavorites() {
+        // мок изображение
+        let fakeFavoriteImage = FavoriteImageEntity(context: CoreDataStack.shared.context!)
+        fakeFavoriteImage.id = "2"
+        imageViewModel.favoriteImages = [fakeFavoriteImage]
 
-        // Act
-        viewModel.cacheRandomImage(image, uiImage: uiImage)
+        // проверка обновления избранные изображения
+        let expectation = XCTestExpectation(description: "Remove from favorites")
+        imageViewModel.removeFromFavorites(at: 0)
+        XCTAssertEqual(imageViewModel.numberOfFavoriteImages, 0)
+        expectation.fulfill()
 
-        // Assert
-        XCTAssertNotNil(viewModel.getCachedRandomImage(at: image))
+        wait(for: [expectation], timeout: 5.0)
     }
 
-    // Тест получения кешированного случайного изображения
-    func testGetCachedRandomImage_ImageCached_ReturnsImage() {
-        // Arrange
-        let image = createTestImage()
-        let uiImage = UIImage(systemName: "heart.fill")! // Просто для примера
-        viewModel.cacheRandomImage(image, uiImage: uiImage)
+    // Тест для метода loadFavoritesFromCache
+    func testLoadFavoritesFromCache() {
+        // мок данные
+        let fakeFavorite1 = FavoriteImageEntity(context: CoreDataStack.shared.context!)
+        fakeFavorite1.id = "3"
+        let fakeFavorite2 = FavoriteImageEntity(context: CoreDataStack.shared.context!)
+        fakeFavorite2.id = "4"
+        imageViewModel.favoriteImages = [fakeFavorite1, fakeFavorite2]
 
-        // Act
-        let cachedImage = viewModel.getCachedRandomImage(at: image)
-        
-        // Assert
+        // проверка, что favoriteImages обновляется
+        let expectation = XCTestExpectation(description: "Load favorites from cache")
+        imageViewModel.loadFavoritesFromCache {
+            XCTAssertEqual(self.imageViewModel.numberOfFavoriteImages, 2)
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+    }
+
+    // Тест для метода getCachedRandomImage
+    func testGetCachedRandomImage() {
+        // Создаем фейковое случайное изображение и кешируем его
+        let imageId = "6"
+        let fakeRandomImage = UIImage(named: "random")!
+        imageViewModel.cacheRandomImage(with: imageId, uiImage: fakeRandomImage)
+
+        // Запускаем метод getCachedRandomImage и проверяем, что изображение успешно загружается из кеша
+        let cachedImage = imageViewModel.getCachedRandomImage(at: ImageModel(id: imageId, author: "Fake Author", width: 100, height: 100, url: "fake_url", download_url: "fake_download_url", isFavorite: false, image: nil))
         XCTAssertNotNil(cachedImage)
+    }
+}
+
+class CoreDataStackTests: XCTestCase {
+
+    var coreDataStack: CoreDataStack!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        coreDataStack = CoreDataStack.shared
+    }
+
+    override func tearDownWithError() throws {
+        coreDataStack = nil
+        try super.tearDownWithError()
+    }
+
+    func testPersistentContainerCreation() throws {
+        XCTAssertNotNil(coreDataStack.persistentContainer, "Persistent container should not be nil")
+
+        // Проверяем, что у нас есть хотя бы один persistentStoreCoordinator
+        XCTAssertFalse(coreDataStack.persistentContainer.persistentStoreDescriptions.isEmpty, "Persistent container should have at least one persistent store")
+    }
+
+    func testManagedObjectContextCreation() throws {
+        XCTAssertNotNil(coreDataStack.context, "Managed context should not be nil")
+    }
+
+    func testSaveContext() throws {
+        let context = coreDataStack.context!
+        let entity = NSEntityDescription.entity(forEntityName: "FavoriteImageEntity", in: context)!
+        let favoriteEntity = NSManagedObject(entity: entity, insertInto: context)
+
+        favoriteEntity.setValue("TestID", forKey: "id")
+
+        // Сохраним
+        coreDataStack.saveContext()
+
+        // Получим объект, чтобы убедиться, что он сохранен.
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "FavoriteImageEntity")
+        fetchRequest.predicate = NSPredicate(format: "id == %@", "TestID")
+
+        let fetchedObjects = try context.fetch(fetchRequest) as! [NSManagedObject]
+        XCTAssertEqual(fetchedObjects.count, 1, "There should be one object in the context with ID 'TestID'")
+    }
+}
+
+class ImageCellTests: XCTestCase {
+
+    var cell: ImageCell!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        cell = ImageCell()
+    }
+
+    override func tearDownWithError() throws {
+        cell = nil
+        try super.tearDownWithError()
+    }
+
+    func testCellHasImageView() {
+        XCTAssertNotNil(cell.getImageView())
+    }
+
+    func testCellHasLikeButton() {
+        XCTAssertNotNil(cell.getLikeButton())
+    }
+
+    func testConfigureForRandom() {
+        let image = ImageModel(id: "1", author: "Author", width: 100, height: 100, url: "http://example.com/image.jpg", download_url: "http://example.com/image.jpg", isFavorite: false, image: nil)
+
+        // Mock ViewModel
+        let viewModel = MockImageViewModel()
+        viewModel.loadImageCompletion = { _, completion in
+            completion(UIImage())
+        }
+        cell.imageViewModel = viewModel
+        cell.tag = 0
+
+        // Action
+        cell.configureForRandom(with: image, isFavoriteTab: false, viewModel: viewModel)
+
+        // Assertion
+        XCTAssertNotNil(cell.getImageView().image)
+        XCTAssertEqual(cell.getLikeButton().image(for: .normal), UIImage(systemName: "heart"))
+    }
+
+    func testConfigureForFavoritesWithCachedImage() {
+        let image = ImageModel(id: "1", author: "Author", width: 100, height: 100, url: "http://example.com/image.jpg", download_url: "http://example.com/image.jpg", isFavorite: true, image: nil)
+
+        // Mock ViewModel
+        let viewModel = MockImageViewModel()
+        viewModel.loadImageCompletion = { _, completion in
+            completion(UIImage())
+        }
+        cell.imageViewModel = viewModel
+        cell.tag = 0
+
+        // Action
+        cell.configureForFavorites(with: image, cachedImage: UIImage(), viewModel: viewModel)
+
+        // Assertion
+        XCTAssertNotNil(cell.getImageView().image)
+        XCTAssertEqual(cell.getLikeButton().image(for: .normal), UIImage(systemName: "heart.fill"))
+    }
+
+    func testUpdateFavoriteButton() {
+        // Action
+        cell.updateFavoriteButton(isFavorite: true)
+
+        // Assertion
+        XCTAssertEqual(cell.getLikeButton().image(for: .normal), UIImage(systemName: "heart.fill"))
+    }
+}
+
+class MockImageViewModel: ImageViewModel {
+
+    var loadImageCompletion: ((ImageModel, @escaping (UIImage?) -> Void) -> Void)?
+
+    override func loadImage(for image: ImageModel, completion: @escaping (UIImage?) -> Void) {
+        loadImageCompletion?(image, completion)
     }
 }

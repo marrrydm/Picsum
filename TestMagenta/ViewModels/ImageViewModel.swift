@@ -1,33 +1,32 @@
 import CoreData
 import UIKit
 
-protocol ImageViewModelDelegate: AnyObject {
-    func didRemoveItem(at index: Int)
-}
-
-protocol ImageViewModelDelegateAdd: AnyObject {
-    func didToggleFavorite(at index: Int, with image: UIImage?)
-}
-
 class ImageViewModel {
     var randomImages: [ImageModel] = []
     var favoriteImages: [FavoriteImageEntity] = []
     var currentTab: Tab = .random
     var isFavoritesTab: Bool = false
-    var userDefaults: UserDefaults = UserDefaults.standard
-    
+    var imageService: ImageServiceProtocol = ImageService.shared
+
     weak var delegate: ImageViewModelDelegate?
     weak var delegateAdd: ImageViewModelDelegateAdd?
     
     func loadImage(for image: ImageModel, completion: @escaping (UIImage?) -> Void) {
-        guard let imageUrl = URL(string: image.download_url) else {
+        guard let urlString = image.download_url.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed),
+              let imageUrl = URL(string: urlString) else {
             completion(nil)
             return
         }
-        
+
         ImageService.shared.loadImage(from: imageUrl) { loadedImage in
             DispatchQueue.main.async {
-                completion(loadedImage)
+                if let loadedImage = loadedImage {
+                    completion(loadedImage)
+                } else {
+                    let error = NSError(domain: "YourDomain", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to load image"])
+                    print("Error loading image: \(error)")
+                    completion(nil)
+                }
             }
         }
     }
@@ -116,7 +115,6 @@ extension ImageViewModel {
         }
     }
     
-    
     func isFavorite(image: ImageModel) -> Bool {
         return favoriteImages.contains { $0.id == image.id }
     }
@@ -126,24 +124,24 @@ extension ImageViewModel {
             completion(.success(())) // Image is already in favorites
             return
         }
-        
+
         guard let context = CoreDataStack.shared.context else {
             print("Error: ManagedObjectContext is nil")
             completion(.failure(NSError(domain: "YourDomain", code: 0, userInfo: nil)))
             return
         }
-        
-        ImageService.shared.loadImage(from: URL(string: image.download_url)!) { [weak self] loadedImage in
+
+        imageService.loadImage(from: URL(string: image.download_url)!) { [weak self] loadedImage in
             guard let self = self, let loadedImage = loadedImage else {
                 completion(.failure(NSError(domain: "YourDomain", code: 0, userInfo: nil)))
                 return
             }
-            
+
             do {
                 let favoriteEntity = try FavoriteImageEntity.create(in: context, image: image, uiImage: loadedImage)
-                
+
                 try context.save()
-                
+
                 self.favoriteImages.append(favoriteEntity)
                 completion(.success(()))
             } catch {

@@ -1,6 +1,6 @@
 import UIKit
 
-class ImageCell: UICollectionViewCell {
+final class ImageCell: UICollectionViewCell {
     static let reuseIdentifier = "ImageCell"
 
     private let imageView: UIImageView = {
@@ -94,5 +94,13 @@ extension ImageCell {
     func updateFavoriteButton(isFavorite: Bool) {
         let imageName = isFavorite ? "heart.fill" : "heart"
         likeButton.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+
+    func getImageView() -> UIImageView {
+        return imageView
+    }
+
+    func getLikeButton() -> UIButton {
+        return likeButton
     }
 }

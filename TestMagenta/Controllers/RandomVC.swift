@@ -1,6 +1,6 @@
 import UIKit
 
-class RandomViewController: UIViewController {
+final class RandomViewController: UIViewController {
     fileprivate let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumInteritemSpacing = 2
